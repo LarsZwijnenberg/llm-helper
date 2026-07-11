@@ -18,7 +18,9 @@ function applyJinjaTemplate(template, vars) {
         add_generation_prompt: vars?.add_generation_prompt ?? true
     });
 }
-;
+function getLMSStats(stats) {
+    return stats;
+}
 class LLM {
     path;
     gguf;
@@ -287,7 +289,6 @@ class LLMChat {
                     }
                 }
                 const options = { ...(opts?.lmStudio?.chatOptions ?? {}) };
-                let lastStats = null;
                 options.onMessage = (message) => {
                     if (typeof opts?.lmStudio?.chatOptions?.onMessage == "function") {
                         opts.lmStudio.chatOptions.onMessage(message);
@@ -314,8 +315,9 @@ class LLMChat {
                     this.addMessage(newMessage);
                 };
                 options.onPredictionCompleted = (prediction) => {
+                    console.log(prediction);
                     if (result.length > 0) {
-                        result[result.length - 1].stats = prediction.stats;
+                        result[result.length - 1].stats = getLMSStats(prediction.stats);
                     }
                 };
                 if (opts?.onFirstToken) {
@@ -430,6 +432,7 @@ class LLMChat {
                     }
                 }
                 const newMessage = new LLMMessage("assistant", completed.content);
+                newMessage.stats = getLMSStats(completed.stats);
                 result.push(newMessage);
                 this.addMessage(newMessage);
             }

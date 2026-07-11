@@ -160,12 +160,13 @@ declare class LLMChat {
 declare class LLMMessage {
     role?: "system" | "user" | "assistant" | "tool";
     content: string;
-    stats?: LLMPredictionStats;
+    stats?: LLMMessageStats;
     constructor(content: string);
     constructor(role: string, content: string);
     clone(): LLMMessage;
     resolveRole(history: LLMMessage[]): void;
 }
+type LLMMessageStats = LLMPredictionStats;
 interface LLMTool {
     /** The identifier the model will see and call. */
     id: string;

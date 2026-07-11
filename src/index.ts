@@ -1,5 +1,5 @@
 import { gguf, GGUFParseOutput } from "@huggingface/gguf"
-import { BaseLoadModelOpts, Chat, ChatMessage, LLMActionOpts, LLMLoadModelConfig, LLMPredictionConfigInput, LLMPredictionOpts, LLMPredictionStats, LLMToolParameters, LMStudioClient, LMStudioClientConstructorOpts, LLM as LMStudioLLM, tool } from "@lmstudio/sdk";
+import { BaseLoadModelOpts, Chat, ChatMessage, LLMActionOpts, LLMLoadModelConfig, LLMPredictionOpts, LLMPredictionStats, LLMToolParameters, LMStudioClient, LMStudioClientConstructorOpts, LLM as LMStudioLLM, tool } from "@lmstudio/sdk";
 import z, { ZodAny } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { Template } from "@huggingface/jinja";
@@ -12,7 +12,11 @@ function applyJinjaTemplate(template: string, vars: {messages?: object[], tools?
     tools: vars?.tools ?? null,
     add_generation_prompt: vars?.add_generation_prompt ?? true
   });
-};
+}
+
+function getLMSStats(stats: LLMPredictionStats): LLMMessageStats {
+  return stats;
+}
 
 
 
@@ -337,7 +341,6 @@ class LLMChat {
         }
         
         const options = {...(opts?.lmStudio?.chatOptions ?? {})};
-        let lastStats: LLMPredictionStats | null = null;
 
         options.onMessage = (message) => {
           if (typeof opts?.lmStudio?.chatOptions?.onMessage == "function") {
@@ -369,8 +372,9 @@ class LLMChat {
         };
 
         options.onPredictionCompleted = (prediction) => {
+          console.log(prediction);
           if (result.length > 0) {
-            result[result.length - 1].stats = prediction.stats;
+            result[result.length - 1].stats = getLMSStats(prediction.stats);
           }
         };
 
@@ -504,6 +508,7 @@ class LLMChat {
         }
 
         const newMessage = new LLMMessage("assistant", completed.content);
+        newMessage.stats = getLMSStats(completed.stats);
         result.push(newMessage);
         this.addMessage(newMessage);
       }
@@ -521,7 +526,7 @@ class LLMChat {
 class LLMMessage {
   role?: "system" | "user" | "assistant" | "tool";
   content: string;
-  stats?: LLMPredictionStats;
+  stats?: LLMMessageStats;
 
   constructor(content: string);
   constructor(role: string, content: string);
@@ -551,6 +556,8 @@ class LLMMessage {
     this.role = "user";
   }
 }
+
+type LLMMessageStats = LLMPredictionStats;
 
 interface LLMTool {
   /** The identifier the model will see and call. */
