@@ -1,5 +1,5 @@
 import { GGUFParseOutput } from "@huggingface/gguf";
-import { BaseLoadModelOpts, LLMActionOpts, LLMLoadModelConfig, LLMPredictionOpts, LMStudioClient, LMStudioClientConstructorOpts, LLM as LMStudioLLM } from "@lmstudio/sdk";
+import { BaseLoadModelOpts, LLMActionOpts, LLMLoadModelConfig, LLMPredictionOpts, LLMPredictionStats, LMStudioClient, LMStudioClientConstructorOpts, LLM as LMStudioLLM } from "@lmstudio/sdk";
 import { ZodAny } from "zod";
 declare function applyJinjaTemplate(template: string, vars: {
     messages?: object[];
@@ -160,6 +160,7 @@ declare class LLMChat {
 declare class LLMMessage {
     role?: "system" | "user" | "assistant" | "tool";
     content: string;
+    stats?: LLMPredictionStats;
     constructor(content: string);
     constructor(role: string, content: string);
     clone(): LLMMessage;

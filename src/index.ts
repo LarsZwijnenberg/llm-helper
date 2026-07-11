@@ -1,5 +1,5 @@
 import { gguf, GGUFParseOutput } from "@huggingface/gguf"
-import { BaseLoadModelOpts, Chat, ChatMessage, LLMActionOpts, LLMLoadModelConfig, LLMPredictionConfigInput, LLMPredictionOpts, LLMToolParameters, LMStudioClient, LMStudioClientConstructorOpts, LLM as LMStudioLLM, tool } from "@lmstudio/sdk";
+import { BaseLoadModelOpts, Chat, ChatMessage, LLMActionOpts, LLMLoadModelConfig, LLMPredictionConfigInput, LLMPredictionOpts, LLMPredictionStats, LLMToolParameters, LMStudioClient, LMStudioClientConstructorOpts, LLM as LMStudioLLM, tool } from "@lmstudio/sdk";
 import z, { ZodAny } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { Template } from "@huggingface/jinja";
@@ -337,6 +337,8 @@ class LLMChat {
         }
         
         const options = {...(opts?.lmStudio?.chatOptions ?? {})};
+        let lastStats: LLMPredictionStats | null = null;
+
         options.onMessage = (message) => {
           if (typeof opts?.lmStudio?.chatOptions?.onMessage == "function") {
             opts.lmStudio.chatOptions.onMessage(message);
@@ -364,6 +366,15 @@ class LLMChat {
           const newMessage = new LLMMessage(role, content);
           result.push(newMessage);
           this.addMessage(newMessage);
+
+          if (lastStats) {
+            newMessage.stats = lastStats;
+            lastStats = null;
+          }
+        };
+
+        options.onPredictionCompleted = (result) => {
+          lastStats = result.stats;
         };
 
         if (opts?.onFirstToken) {
@@ -469,8 +480,6 @@ class LLMChat {
         }
 
         if (opts?.onToken) {
-          let lastMessageIndex = -1;
-
           options.onPredictionFragment = (fragment) => {
             if (typeof opts.lmStudio?.completionOptions?.onPredictionFragment == "function") {
               opts.lmStudio.completionOptions.onPredictionFragment(fragment);
@@ -515,6 +524,7 @@ class LLMChat {
 class LLMMessage {
   role?: "system" | "user" | "assistant" | "tool";
   content: string;
+  stats?: LLMPredictionStats;
 
   constructor(content: string);
   constructor(role: string, content: string);

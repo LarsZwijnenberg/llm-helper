@@ -287,6 +287,7 @@ class LLMChat {
                     }
                 }
                 const options = { ...(opts?.lmStudio?.chatOptions ?? {}) };
+                let lastStats = null;
                 options.onMessage = (message) => {
                     if (typeof opts?.lmStudio?.chatOptions?.onMessage == "function") {
                         opts.lmStudio.chatOptions.onMessage(message);
@@ -311,6 +312,13 @@ class LLMChat {
                     const newMessage = new LLMMessage(role, content);
                     result.push(newMessage);
                     this.addMessage(newMessage);
+                    if (lastStats) {
+                        newMessage.stats = lastStats;
+                        lastStats = null;
+                    }
+                };
+                options.onPredictionCompleted = (result) => {
+                    lastStats = result.stats;
                 };
                 if (opts?.onFirstToken) {
                     let started = false;
@@ -399,7 +407,6 @@ class LLMChat {
                     };
                 }
                 if (opts?.onToken) {
-                    let lastMessageIndex = -1;
                     options.onPredictionFragment = (fragment) => {
                         if (typeof opts.lmStudio?.completionOptions?.onPredictionFragment == "function") {
                             opts.lmStudio.completionOptions.onPredictionFragment(fragment);
@@ -441,6 +448,7 @@ exports.LLMChat = LLMChat;
 class LLMMessage {
     role;
     content;
+    stats;
     constructor(role, content) {
         if (content === undefined) {
             content = role;
