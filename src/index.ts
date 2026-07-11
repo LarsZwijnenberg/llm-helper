@@ -369,7 +369,6 @@ class LLMChat {
 
           const newMessage = new LLMMessage(role, content);
 
-          console.log(lastStats);
           if (lastStats !== undefined) {
             newMessage.stats = lastStats;
             lastStats = undefined;
