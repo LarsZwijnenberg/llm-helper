@@ -297,7 +297,7 @@ class LLMChat {
       }
     }
     
-    const result = [];
+    const result: LLMMessage[] = [];
 
     if (engine == "lmstudio") {
       if (!this.model.lmsModel) {
@@ -366,15 +366,12 @@ class LLMChat {
           const newMessage = new LLMMessage(role, content);
           result.push(newMessage);
           this.addMessage(newMessage);
-
-          if (lastStats) {
-            newMessage.stats = lastStats;
-            lastStats = null;
-          }
         };
 
-        options.onPredictionCompleted = (result) => {
-          lastStats = result.stats;
+        options.onPredictionCompleted = (prediction) => {
+          if (result.length > 0) {
+            result[result.length - 1].stats = prediction.stats;
+          }
         };
 
         if (opts?.onFirstToken) {
