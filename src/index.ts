@@ -369,10 +369,11 @@ class LLMChat {
           const newMessage = new LLMMessage(role, content);
           result.push(newMessage);
           this.addMessage(newMessage);
+          console.log("Test");
         };
 
         options.onPredictionCompleted = (prediction) => {
-          console.log(prediction);
+          console.log(prediction, result);
           if (result.length > 0) {
             result[result.length - 1].stats = getLMSStats(prediction.stats);
           }
