@@ -289,6 +289,7 @@ class LLMChat {
                     }
                 }
                 const options = { ...(opts?.lmStudio?.chatOptions ?? {}) };
+                let lastStats;
                 options.onMessage = (message) => {
                     if (typeof opts?.lmStudio?.chatOptions?.onMessage == "function") {
                         opts.lmStudio.chatOptions.onMessage(message);
@@ -311,14 +312,20 @@ class LLMChat {
                         }
                     }
                     const newMessage = new LLMMessage(role, content);
+                    console.log(lastStats);
+                    if (lastStats !== undefined) {
+                        newMessage.stats = lastStats;
+                        lastStats = undefined;
+                    }
                     result.push(newMessage);
                     this.addMessage(newMessage);
-                    console.log("Test");
                 };
                 options.onPredictionCompleted = (prediction) => {
-                    console.log(prediction, result);
                     if (result.length > 0) {
                         result[result.length - 1].stats = getLMSStats(prediction.stats);
+                    }
+                    else {
+                        lastStats = getLMSStats(prediction.stats);
                     }
                 };
                 if (opts?.onFirstToken) {

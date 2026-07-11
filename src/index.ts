@@ -341,6 +341,7 @@ class LLMChat {
         }
         
         const options = {...(opts?.lmStudio?.chatOptions ?? {})};
+        let lastStats: LLMMessageStats | undefined;
 
         options.onMessage = (message) => {
           if (typeof opts?.lmStudio?.chatOptions?.onMessage == "function") {
@@ -367,15 +368,22 @@ class LLMChat {
           }
 
           const newMessage = new LLMMessage(role, content);
+
+          console.log(lastStats);
+          if (lastStats !== undefined) {
+            newMessage.stats = lastStats;
+            lastStats = undefined;
+          }
+
           result.push(newMessage);
           this.addMessage(newMessage);
-          console.log("Test");
         };
 
         options.onPredictionCompleted = (prediction) => {
-          console.log(prediction, result);
           if (result.length > 0) {
             result[result.length - 1].stats = getLMSStats(prediction.stats);
+          } else {
+            lastStats = getLMSStats(prediction.stats);
           }
         };
 
